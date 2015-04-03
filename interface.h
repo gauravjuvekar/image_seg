@@ -2,7 +2,7 @@
 #include<inttypes.h>
 
 struct pixel {
-	uint8_t b,g,r;
+	uint8_t b,g,r; // Order is important
 	int segment;
 	unsigned int x,y;
 };
