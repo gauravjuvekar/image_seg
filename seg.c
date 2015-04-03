@@ -17,15 +17,22 @@ int main(int argc, char *argv[]) {
 		file = argv[1];
 	}
 	else {
-		fprintf(stderr, "Usage: %s file threshold minimum_pixels_per_segment segment_no\n", argv[0]);
+		fprintf(
+			stderr,
+		"Usage: %s file threshold minimum_pixels_per_segment segment_no\n",
+			argv[0]
+		);
 		exit(-1);
 	}
+
+	unsigned int threshold = (unsigned int) atoi(argv[2]);
+	unsigned int min_pixels_per_segment = (unsigned int) atoi(argv[3]);
+	unsigned int segment_number_input = (unsigned int) atoi(argv[4]);
 
 	FILE *input = fopen(file, "r+b");
 	fseek(input, 0, SEEK_SET);
 
 	assert(input != NULL);
-	
 
 	uint16_t buffer16;
 	fread(&buffer16, 1, sizeof(buffer16), input);
@@ -38,17 +45,22 @@ int main(int argc, char *argv[]) {
 	fread(&buffer32, 1, sizeof(buffer32), input);
 	pixel_array_offset = (ptrdiff_t)buffer32;
 
-	int32_t height, width;
-
+	/* Get dimensions from file
+	 */
+	int height, width;
+	
 	fseek(input,0x12,SEEK_SET);
 	fread(&buffer32, 1, sizeof(buffer32), input);
-	width = (int32_t)buffer32;
+	width = (int)buffer32;
 
 	fseek(input,0x16,SEEK_SET);
 	fread(&buffer32, 1, sizeof(buffer32), input);
-	height = (int32_t)buffer32;
+	height = (int)buffer32;
 
-	struct pixel *pixel_array = (struct pixel*)calloc(width * height, sizeof(struct pixel));
+	struct pixel *pixel_array = (struct pixel*)calloc(
+			width*height,
+			sizeof(struct pixel)
+	);
 	assert(pixel_array != NULL);
 
 	fseek(input, pixel_array_offset, SEEK_SET);
@@ -65,20 +77,34 @@ int main(int argc, char *argv[]) {
 
 
 
-/*Actual grow called.	*/
+	/* Actual grow called.
+	 */
+
+	int segment_map[ (height*width)/min_pixels_per_segment + 10][2];
+	//TODO:find exact
+	// keep segment number and segment count
+	// index translation for valid segments + pixels in valid segments
+
 	int segment_count = 1;
 	int valid_segment_count = 0;
-
-	int segment_map[ (height*width)/ atoi(argv[3]) + 10][2]; //TODO:find exact
-	// keep segment number and segment count
-
 	unsigned int pixels_in_segment = 0;
+
 	for (i = 0 ; i < height ; ++i) {
 		for (j = 0 ; j < width ; ++j) {
-			struct pixel *current = get(pixel_array, j, i , width, height);
+
+			struct pixel *current = get(pixel_array, j, i, width, height);
+
 			if(current -> segment == 0) {
-				pixels_in_segment = grow(current ,segment_count, pixel_array, width, height, (unsigned int)atoi(argv[2]));
-				if (pixels_in_segment >= (unsigned int)atoi(argv[3])) {
+				pixels_in_segment = grow(
+						current,
+						segment_count,
+						pixel_array,
+						width,
+						height,
+						threshold
+				); 
+
+				if (pixels_in_segment >= min_pixels_per_segment) {
 					valid_segment_count++;
 					segment_map[valid_segment_count][0] = segment_count;
 					segment_map[valid_segment_count][1] = pixels_in_segment;
@@ -89,10 +115,15 @@ int main(int argc, char *argv[]) {
 	}
 
 
-/*Print in ascii*/
+	/* Print in ascii
+	 */
 	for (i = height - 1; i >= 0 ; --i) {
 		for (j = 0 ; j < width ; ++j) {
-			if (get(pixel_array, j, i , width, height) -> segment == segment_map[atoi(argv[4])][0]) {
+			if (get(
+						pixel_array,
+						j, i,
+						width, height
+				)->segment == segment_map[segment_number_input][0]) {
 				printf("#");
 			}
 			else {
@@ -106,7 +137,7 @@ int main(int argc, char *argv[]) {
 	/*Stats*/
 	puts("\n\n\n--------------------------------------------\n");
 	printf("Total segments: %d\n", valid_segment_count );
-	for (i = 1; i < valid_segment_count ; i++, segment_count = 0 ) {
+	for (i = 1; i <= valid_segment_count ; i++, segment_count = 0 ) {
 		printf("Segment %d \t has %d pixels\n", i, segment_map[i][1]);
 	}
 }
