@@ -67,47 +67,32 @@ int main(int argc, char *argv[]) {
 
 /*Actual grow called.	*/
 	int segment_count = 1;
+	int valid_segment_count = 0;
+
+	int segment_map[ (height*width)/ atoi(argv[3]) + 10][2]; //TODO:find exact
+	// keep segment number and segment count
+
+	unsigned int pixels_in_segment = 0;
 	for (i = 0 ; i < height ; ++i) {
 		for (j = 0 ; j < width ; ++j) {
 			struct pixel *current = get(pixel_array, j, i , width, height);
 			if(current -> segment == 0) {
-				grow(current ,segment_count, pixel_array, width, height, (unsigned int)atoi(argv[2]));
+				pixels_in_segment = grow(current ,segment_count, pixel_array, width, height, (unsigned int)atoi(argv[2]));
+				if (pixels_in_segment >= (unsigned int)atoi(argv[3])) {
+					valid_segment_count++;
+					segment_map[valid_segment_count][0] = segment_count;
+					segment_map[valid_segment_count][1] = pixels_in_segment;
+				}
 				segment_count++;
 			}
 		}
 	}
 
-	/* prune tiny segments */
-	int tmp_seg_count = 0;
-	int new_count = 1;
-
-	for (i = 1; i <=segment_count; i++, tmp_seg_count = 0 ) {
-		for (j = 0 ; j < width * height ; j++) {
-			if (pixel_array[j].segment == i) {
-				tmp_seg_count++;
-			}
-		}
-		if (tmp_seg_count < atoi(argv[3])) {	
-			for (j = 0 ; j < width * height ; j++) {
-				if (pixel_array[j].segment == i) {
-					pixel_array[j].segment = 0;
-				}
-			}
-		}
-		else {
-			for (j = 0 ; j < width * height ; j++) {
-				if (pixel_array[j].segment == i) {
-					pixel_array[j].segment = new_count;
-				}
-			}
-			new_count++;
-		}
-	}
 
 /*Print in ascii*/
 	for (i = height - 1; i >= 0 ; --i) {
 		for (j = 0 ; j < width ; ++j) {
-			if (get(pixel_array, j, i , width, height) -> segment == atoi(argv[4])) {
+			if (get(pixel_array, j, i , width, height) -> segment == segment_map[atoi(argv[4])][0]) {
 				printf("#");
 			}
 			else {
@@ -120,13 +105,8 @@ int main(int argc, char *argv[]) {
 
 	/*Stats*/
 	puts("\n\n\n--------------------------------------------\n");
-	printf("Total segments: %d\n", new_count - 1);
-	for (i = 1; i < new_count ; i++, segment_count = 0 ) {
-		for (j = 0 ; j < width * height ; j++) {
-			if (pixel_array[j].segment == i) {
-				segment_count++;
-			}
-		}
-		printf("Segment %d \t has %d pixels\n", i, segment_count);
+	printf("Total segments: %d\n", valid_segment_count );
+	for (i = 1; i < valid_segment_count ; i++, segment_count = 0 ) {
+		printf("Segment %d \t has %d pixels\n", i, segment_map[i][1]);
 	}
 }

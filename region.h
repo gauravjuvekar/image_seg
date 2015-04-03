@@ -7,7 +7,7 @@ bool is_similar(
 		struct pixel *pixel2,
 		unsigned int threshold);
 
-void grow(struct pixel *pixel, unsigned int segment,
+unsigned int grow(struct pixel *pixel, unsigned int segment,
 		struct pixel *array,
 		const unsigned int width,
 		const unsigned int height, unsigned int threshold);
