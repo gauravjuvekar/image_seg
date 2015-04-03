@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
 		file = argv[1];
 	}
 	else {
+		fprintf(stderr, "Usage: %s file threshold minimum_pixels_per_segment segment_no\n", argv[0]);
 		exit(-1);
 	}
 
