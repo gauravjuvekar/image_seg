@@ -80,13 +80,14 @@ int main(int argc, char *argv[]) {
 	/* Actual grow called.
 	 */
 
-	int segment_map[ (height*width)/min_pixels_per_segment + 10][2];
+	unsigned int segment_map_max = (height*width)/min_pixels_per_segment + 10;
+	int segment_map[segment_map_max][2];
 	//TODO:find exact
 	// keep segment number and segment count
 	// index translation for valid segments + pixels in valid segments
 
-	int segment_count = 1;
-	int valid_segment_count = 0;
+	unsigned int segment_count = 1;
+	unsigned int valid_segment_count = 0;
 	unsigned int pixels_in_segment = 0;
 
 	for (i = 0 ; i < height ; ++i) {
@@ -115,29 +116,42 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	/* Print in ascii
+	/* Input checking
 	 */
-	for (i = height - 1; i >= 0 ; --i) {
-		for (j = 0 ; j < width ; ++j) {
-			if (get(
-						pixel_array,
-						j, i,
-						width, height
-				)->segment == segment_map[segment_number_input][0]) {
-				printf("#");
-			}
-			else {
-				printf(".");
-			}
-		}
-			printf("\n");
+
+	if (segment_number_input > valid_segment_count) {
+		fprintf(stderr,
+				"Segment pruned or invalid, check total segments below\n"
+		);
 	}
+	else {
+		/* Print in ascii
+		*/
+		for (i = height - 1; i >= 0 ; --i) {
+			for (j = 0 ; j < width ; ++j) {
+				if (get(
+							pixel_array,
+							j, i,
+							width, height
+					   )->segment == segment_map[segment_number_input][0]) {
+					printf("#");
+				}
+				else {
+					printf(".");
+				}
+			}
+			printf("\n");
+		}
+
+	}
+
 
 
 	/*Stats*/
 	puts("\n\n\n--------------------------------------------\n");
 	printf("Total segments: %d\n", valid_segment_count );
-	for (i = 1; i <= valid_segment_count ; i++, segment_count = 0 ) {
-		printf("Segment %d \t has %d pixels\n", i, segment_map[i][1]);
+	unsigned int k;
+	for (k = 1; k <= valid_segment_count ; k++, segment_count = 0 ) {
+		printf("Segment %d \t has %d pixels\n", k, segment_map[k][1]);
 	}
 }
